@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The First Session: Nikolaj</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#181f1a; --panel:#212a22; --panel-edge:#3b4a3c;
+    --lamp:#d9a441; --lamp-dim:#a67d38; --sage:#7c9a82;
+    --text:#ece7d8; --text-dim:#a9b3a4; --tag:#c7b98e;
+    box-sizing:border-box;
+  }
+  *{box-sizing:inherit;}
+  html,body{ height:100%; margin:0; background:var(--bg); color:var(--text);
+    font-family:'Inter',system-ui,sans-serif; overflow:hidden; }
+  #stage{ position:relative; width:100%; height:100%;
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+
+  #scene{ position:absolute; inset:0;
+    background: radial-gradient(ellipse 55% 45% at 22% 22%, rgba(217,164,65,0.28), transparent 60%),
+      linear-gradient(160deg, #151c16 0%, #181f1a 55%, #10150f 100%); }
+  .window{ position:absolute; top:8%; left:6%; width:150px; height:190px;
+    background:linear-gradient(200deg, rgba(124,154,130,0.18), rgba(20,26,20,0.5));
+    border:3px solid #2c362d; border-radius:4px; overflow:hidden; }
+  .window::before,.window::after{ content:""; position:absolute; background:#2c362d; }
+  .window::before{ left:50%; top:0; bottom:0; width:3px; transform:translateX(-50%); }
+  .window::after{ top:50%; left:0; right:0; height:3px; transform:translateY(-50%); }
+  .rain span{ position:absolute; top:-20%; width:1px; height:18%;
+    background:rgba(180,200,185,0.35); animation:fall 1.6s linear infinite; }
+  @keyframes fall{ to{ transform:translateY(520%); } }
+  .lamp-glow{ position:absolute; right:9%; bottom:30%; width:26px; height:26px; border-radius:50%;
+    background:radial-gradient(circle,#ffe9bd,var(--lamp) 55%,transparent 75%);
+    box-shadow:0 0 55px 24px rgba(217,164,65,0.4); animation:flick 5s ease-in-out infinite; }
+  @keyframes flick{ 0%,100%{opacity:.85;} 50%{opacity:1; box-shadow:0 0 70px 30px rgba(217,164,65,0.55);} }
+  .plant{ position:absolute; left:4%; bottom:0; width:70px; height:110px; }
+  .plant .pot{ position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:38px; height:26px;
+    background:#4a3a2c; border-radius:2px 2px 8px 8px; }
+  .plant .leaf{ position:absolute; bottom:20px; left:50%; width:8px; height:60px; background:var(--sage);
+    border-radius:60% 5% 60% 5%; transform-origin:bottom center; }
+
+  #title{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; text-align:center; padding:24px; gap:14px; background:rgba(16,21,16,0.4); overflow-y:auto; }
+  #title h1{ font-family:'Fraunces',serif; font-size:clamp(26px,5.5vw,46px); margin:0; }
+  #title p{ color:var(--text-dim); margin:0; max-width:480px; font-size:14.5px; line-height:1.6; }
+  #title p.note{ font-size:12px; opacity:.75; max-width:440px; }
+  button{ font-family:'Inter',sans-serif; cursor:pointer; border:none; }
+  .btn-primary{ background:var(--lamp); color:#241704; font-weight:600; font-size:16px;
+    padding:12px 30px; border-radius:3px; transition:transform .15s ease, background .15s ease; }
+  .btn-primary:hover{ background:#ecc06f; transform:translateY(-1px); }
+  .btn-primary:focus-visible,.choice-btn:focus-visible{ outline:2px solid var(--lamp); outline-offset:3px; }
+
+  #dialogue-wrap{ position:absolute; left:0; right:0; bottom:0; padding:0 4%;
+    padding-bottom:calc(4% + env(safe-area-inset-bottom,0px)); display:flex; justify-content:center; }
+  #box{ width:100%; max-width:800px; background:linear-gradient(180deg,var(--panel),#151d16);
+    border:1px solid var(--panel-edge); border-radius:6px; padding:18px 24px 20px;
+    box-shadow:0 -8px 40px rgba(0,0,0,0.4); cursor:pointer; }
+  #box.narration{ background:linear-gradient(180deg,#1b221c,#131912); }
+  #box-inner{ display:flex; gap:16px; align-items:flex-start; }
+  #portrait{ width:78px; height:78px; flex-shrink:0; border-radius:6px; overflow:hidden;
+    background:#10150f; border:1px solid var(--panel-edge); transition:opacity .2s ease, filter .2s ease; }
+  #portrait.hidden-p{ display:none; }
+  #text-col{ flex:1; min-width:0; }
+  #speaker{ font-family:'Fraunces',serif; color:var(--lamp); font-size:15px; margin:0 0 8px 0; }
+  #box.narration #speaker{ color:var(--text-dim); font-style:italic; }
+  #line{ margin:0; font-size:16.5px; line-height:1.55; min-height:2.4em; }
+  #box.narration #line{ color:var(--text-dim); font-style:italic; font-size:15px; }
+  #hint{ text-align:right; color:var(--text-dim); font-size:12px; margin-top:8px; opacity:.8; }
+  #choices{ display:flex; flex-direction:column; gap:10px; padding:6px 0 4px; }
+  .choice-btn{ background:rgba(124,154,130,0.09); border:1px solid var(--panel-edge); color:var(--text);
+    text-align:left; padding:11px 16px 12px; border-radius:4px; transition:background .15s ease, border-color .15s ease; }
+  .choice-btn:hover{ background:rgba(124,154,130,0.2); border-color:var(--sage); }
+  .choice-label{ font-size:15px; display:block; }
+  .choice-tag{ font-size:11.5px; color:var(--tag); display:block; margin-top:4px; opacity:.85; }
+  .hidden{ display:none !important; }
+
+  #results{ position:absolute; inset:0; overflow-y:auto; background:var(--bg); padding:6% 6% 10%; }
+  #results-inner{ max-width:680px; margin:0 auto; }
+  .card{ background:var(--panel); border:1px solid var(--panel-edge); border-radius:6px; padding:24px 26px; margin-bottom:22px; }
+  .archetype-name{ font-family:'Fraunces',serif; font-size:clamp(24px,4.5vw,32px); color:var(--lamp); margin:0 0 8px; }
+  .archetype-desc{ font-size:15px; line-height:1.6; margin:0 0 6px; }
+  .clinical-note{ font-size:13px; color:var(--text-dim); border-top:1px solid var(--panel-edge); padding-top:12px; margin-top:14px; line-height:1.55; }
+  .bar-row{ display:flex; align-items:center; gap:10px; margin:8px 0; font-size:13px; color:var(--text-dim); }
+  .bar-label{ width:96px; flex-shrink:0; }
+  .bar-track{ flex:1; height:8px; background:#10150f; border-radius:4px; overflow:hidden; }
+  .bar-fill{ height:100%; background:var(--sage); border-radius:4px; }
+  h2.section-title{ font-family:'Fraunces',serif; font-size:19px; margin:0 0 10px; }
+  ul.prompts{ margin:0 0 16px; padding-left:20px; color:var(--text-dim); font-size:14px; line-height:1.7; }
+  textarea{ width:100%; min-height:160px; background:#10150f; border:1px solid var(--panel-edge); border-radius:4px;
+    color:var(--text); font-family:'Inter',sans-serif; font-size:14.5px; padding:14px; resize:vertical; }
+  textarea:focus-visible{ outline:2px solid var(--lamp); }
+  #save-hint{ font-size:12px; color:var(--text-dim); margin-top:8px; }
+  .btn-ghost{ background:transparent; border:1px solid var(--panel-edge); color:var(--text-dim);
+    font-size:13px; padding:9px 16px; border-radius:4px; margin-top:18px; }
+  .btn-ghost:hover{ border-color:var(--sage); color:var(--text); }
+
+  #box.thought{ background:linear-gradient(180deg,#1c2a24,#131b17); border-color:#4c6b58; }
+  #box.thought #speaker{ color:var(--sage); font-style:italic; }
+  #box.thought #line{ color:#cfe0d3; font-style:italic; font-size:15px; }
+  .prose{ font-size:14.5px; line-height:1.65; margin:0 0 12px; }
+  .prose.small{ color:var(--text-dim); font-size:13px; }
+  .rev{ border-top:1px solid var(--panel-edge); padding:14px 0 6px; }
+  .rev-title{ font-family:'Fraunces',serif; font-size:16px; color:var(--lamp); margin-bottom:6px; }
+  .rev-said{ font-size:14.5px; margin:0 0 8px; }
+  .school{ display:inline-block; font-size:11.5px; background:rgba(124,154,130,0.18); color:var(--tag); padding:2px 9px; border-radius:10px; margin-right:6px; }
+  .rev-why{ font-size:13.5px; color:var(--text-dim); line-height:1.6; margin:8px 0; }
+  details summary{ cursor:pointer; font-size:12.5px; color:var(--text-dim); margin:4px 0 8px; }
+  .alt{ margin:0 0 12px 10px; font-size:13px; color:var(--text-dim); line-height:1.55; }
+  #hud{ position:absolute; top:calc(env(safe-area-inset-top,0px) + 12px); left:50%; transform:translateX(-50%);
+    width:min(560px,92%); background:rgba(16,21,16,0.78); border:1px solid var(--panel-edge); border-radius:6px;
+    padding:10px 14px; display:flex; flex-direction:column; gap:8px; z-index:3; }
+  .meter{ display:flex; align-items:center; gap:10px; font-size:12px; color:var(--text-dim); }
+  .m-label{ width:46px; flex-shrink:0; }
+  .m-track{ flex:1; height:8px; background:#0e130f; border-radius:4px; overflow:hidden; }
+  .m-fill{ height:100%; width:0; border-radius:4px; transition:width .5s ease, background .5s ease; background:#7c9a82; }
+  .m-state{ width:70px; text-align:right; flex-shrink:0; color:var(--text); }
+  #portrait.warn{ border-color:#d9a441; }
+  #portrait.hot{ border-color:#c9563f; }
+  #box{ max-height:68vh; overflow-y:auto; }
+  .choice-btn{ padding:10px 14px; }
+  .choice-label{ font-size:14.5px; line-height:1.45; }
+  .rev-react{ font-size:13.5px; font-style:italic; color:var(--text-dim); margin:0 0 8px; }
+  .chip{ display:inline-block; font-size:11.5px; background:rgba(124,154,130,0.16); color:var(--tag); padding:2px 9px; border-radius:10px; margin:2px 6px 2px 0; }
+  .chip.ok{ background:rgba(124,154,130,0.32); color:#cfe6d4; }
+  .chip.bad{ background:rgba(201,86,63,0.22); color:#f0b5a6; }
+  .legend{ font-size:12px; color:var(--text-dim); margin:6px 0 0; }
+  @media (max-width:480px){ #box{ padding:14px 16px 16px; } #line{ font-size:15.5px; } #portrait{ width:58px; height:58px; } }
+</style>
+<script type='text/javascript' nonce='MV76KUtCjzXk55WBkvGYyQ==' src='https://75abac6d-408f-425b-bf39-0f9bcc47a75f.frame.claudeusercontent.com/WU0l8Vcg_EmH0KjYgzsli-iCxSdVhijRx8P3_XqCXl7orSBRE4sHACBh5M04mv0Ou4ZmWB2AMWqfaEHO9BG4nqayXL_NTdHkiZe5GcTJ6oLURBLaJMJoDmKmyK7iL2F68DAa6mY6XuJYTJoP5BY5iRUhuM8w5SEy2mbtpSG6aYhd-VREOYG4emQ4tfGI6b2NixBIEpadKNzZiWHOIFbuGt96Z7fHYn4oRuSaeZZQ6LZosZfybmAx7zr33rqrvp367XaomRAzsHif-8HdJVcoUNpwFNK8JjLv--1CUwmzNlCCVFjlRis97fYApNEV6PeFkPKcRCOlwVv5Xc9Iut_QLCnRWGOPPwfHTNSbjbzksq7U4pKD0jw0oc_aPalrAr5f0hIl0ADukEiMAML8wxkcPWVDChf8VdMhwdCcKHeSy5tLROk1bwt5IyIxZCZ60xaC7iX9sieGuPLKopNTyHw9SmpjFsF-LAvASDIhu05QiQHcGske9EiKFqXx_ZC8S45YP3r7F7RzAuyQ0Fw4LsRwLsWinOr8lYXXLRodfBTJqvwk7BInYPLxI9JmYMAI1R7DFiOEswOZBcx1bARDvLkwGtNQbJdgx5435oChnWBB6ZagafIW4fgVxokaWhZq6B_mNCpuXt9lQXEnPZP6sUeTutl3SwxjQEKxS35HEWbYRE--HbCW84dqLCncz0QGhbDB1JVlunjVdqIV9EbtgOUbGg'></script></head>
+<body>
+<div id="stage">
+  <div id="scene">
+    <div class="window"><div class="rain" id="rain"></div></div>
+    <div class="plant">
+      <div class="leaf" style="transform:rotate(-18deg);"></div>
+      <div class="leaf" style="transform:rotate(10deg); left:56%;"></div>
+      <div class="leaf" style="transform:rotate(-2deg); left:44%; height:70px;"></div>
+      <div class="pot"></div>
+    </div>
+    <div class="lamp-glow"></div>
+  </div>
+
+  <div id="title">
+    <p style="letter-spacing:2px; font-size:11.5px; color:var(--lamp-dim);">AN IMMERSIVE CASE STUDY EXERCISE</p>
+    <h1>The First Session: Nikolaj</h1>
+    <p>You are the therapist. A new client, twenty-four, has just sat down across from you. Read the room, choose how to respond, and pay close attention to how he reacts.</p>
+    <p>Two gauges track him: <strong>Shame</strong>, how threatened he feels, and <strong>Trust</strong>, how safe he feels with you. Push too hard before trust exists and he may walk out. Play it too safe and the hour changes nothing. There is no perfect script.</p>
+    <button class="btn-primary" id="start-btn">Begin the session</button>
+    <p class="note">A companion for the Nikolaj case study discussion. Best used with your group, without AI.</p>
+  </div>
+
+  <div id="hud" class="hidden">
+    <div class="meter"><span class="m-label">Shame</span><div class="m-track"><div class="m-fill" id="shame-fill"></div></div><span class="m-state" id="shame-state"></span></div>
+    <div class="meter"><span class="m-label">Trust</span><div class="m-track"><div class="m-fill" id="trust-fill" style="background:#8fb3c9;"></div></div><span class="m-state" id="trust-state"></span></div>
+  </div>
+
+  <div id="dialogue-wrap" class="hidden">
+    <div id="box" tabindex="0">
+      <div id="box-inner">
+        <div id="portrait">
+          <svg viewbox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100" height="100" fill="#1d2a20"/>
+            <path d="M18 100c2-24 14-34 32-34s30 10 32 34z" fill="#4a5a4c"/>
+            <circle cx="50" cy="42" r="23" fill="#c9a876"/>
+            <path d="M27 34c2-14 12-22 23-22s21 8 23 22c-6-6-14-9-23-9s-17 3-23 9z" fill="#3b2a1c"/>
+            <ellipse cx="41" cy="44" rx="2.6" ry="3.2" fill="#2a1d12"/>
+            <ellipse cx="59" cy="44" rx="2.6" ry="3.2" fill="#2a1d12"/>
+            <path id="mouth" d="M40 56q10 6 20 0" stroke="#6b4a30" stroke-width="2" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div id="text-col">
+          <p id="speaker"></p>
+          <p id="line"></p>
+          <div id="choices" class="hidden"></div>
+          <div id="hint">click to continue &#9656;</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="results" class="hidden">
+    <div id="results-inner">
+      <div class="card">
+        <p class="archetype-name" id="end-title"></p>
+        <p class="archetype-desc" id="end-desc"></p>
+        <div id="chart"></div>
+        <p class="legend"><span style="color:#d9a441;">&#9679; Shame</span> &nbsp;&nbsp; <span style="color:#8fb3c9;">&#9679; Trust</span></p>
+        <p class="clinical-note" id="end-stats"></p>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">Your session, moment by moment</h2>
+        <p class="prose small">The numbers appear here for the first time. Read the reasoning, not just the score: the same words can protect or wound depending on what came before them.</p>
+        <div id="review"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">Reading your trace</h2>
+        <ul class="prompts">
+          <li>Where did shame climb fastest, and what in Nikolaj's story made that a sore spot?</li>
+          <li>Which choices felt kind but moved nothing? What might it cost him to be asked more?</li>
+          <li>If a question was right but too early, what would you need to see in him to know it is time?</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">Take it to your group</h2>
+        <p class="prose"><strong>Before anything else:</strong> choose one detail from Nikolaj's story that you find important or puzzling, and invite each person in your group to share theirs.</p>
+        <p class="prose"><strong>Your task:</strong> build an interpretation of what keeps Nikolaj stuck and explore what might help. Several interpretations may fit, so use details from the case to explain yours. Start with a question that interests your group. You don't need to finish every question or agree with each other.</p>
+        <p class="prose">When you have an initial answer, stay with it a little longer:</p>
+        <ul class="prompts">
+          <li>What in the story makes us think that?</li>
+          <li>What else could explain the same behavior?</li>
+          <li>What would we need to know to tell the difference?</li>
+        </ul>
+        <p class="prose">For example, “he blames everyone else” is a starting point. But what might he be protecting himself from with that? Shame, fear of being unwanted, the loss of his father's approval, or something else? Would those possibilities call for the same response?</p>
+        <p class="prose small">Changing your mind, questioning an interpretation, and noticing missing information all count as contributions. You don't need to share personal experiences. Please discuss without AI. No written answers are required.</p>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">Optional notes for yourself</h2>
+        <textarea id="notes" placeholder="Anything you want to bring to your group. Nothing to submit. Autosaves in this browser only."></textarea>
+        <p id="save-hint"></p>
+      </div>
+
+      <button class="btn-ghost" id="restart-btn">Play again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const rain = document.getElementById('rain');
+  for(let i=0;i<14;i++){
+    const s = document.createElement('span');
+    s.style.left = (i*7+2)+'%';
+    s.style.animationDelay = (Math.random()*1.6)+'s';
+    rain.appendChild(s);
+  }
+
+  // Option fields: l label, t therapist thought, r reply, rr reply if ripe,
+  // s shame, u trust, d depth (0-2), ripe = trust needed for a confrontation to land, w recap explanation
+  const moments = [
+    { title:"Opening the session",
+      ctx:"Nikolaj sits down, glances at the diplomas on your wall, and gives you an easy, practiced smile. Referral notes mention a marriage under strain, friends growing distant, and a family that encouraged him to come.",
+      said:"“So... where do you want to start?” He smiles as if he's the one hosting.",
+      options:[
+        { l:"Thank you for coming in. Tell me what brought you here, in your own words.",
+          t:"I'm handing him the frame instead of using the referral notes. Everyone else has already told his story for him, and I'd like to hear which version he chooses to give me.",
+          r:"He straightens a little. “My family thought I should talk to someone. Honestly, I'm fine, but... sure.”",
+          s:-3, u:10, d:1,
+          w:"An open invitation gives him authorship of his own story, which matters for someone surrounded by people who describe him without him. It costs little and builds a base." },
+        { l:"I understand others encouraged you to come. How do you feel about being here?",
+          t:"He may not have chosen this, and pretending otherwise would start us on a false footing. Naming that gently might make it easier for him to admit he doubts the point.",
+          r:"He laughs, surprised. “Honestly? A bit like being called into the principal's office. But I'll give it a shot.”",
+          s:2, u:12, d:1,
+          w:"Naming the ambivalence out loud takes the pressure off pretending, and shows him that being pushed here does not have to be hidden from you." },
+        { l:"Before we start: this is confidential, and nothing you say here is a test.",
+          t:"He arrives braced for judgment, from a father who criticizes him and friends who are annoyed by him. Saying it's not a test may loosen the bracing before we begin.",
+          r:"Something in his shoulders drops. “Good. People usually seem to be keeping score.”",
+          s:-6, u:8, d:0,
+          w:"Reassurance lowers his guard, particularly given how much evaluation he lives under. It soothes rather than explores, so it does not move the work forward by itself." },
+        { l:"Rough weather out there. Was it a long trip in?",
+          t:"Small talk gives us both a minute to settle. It won't get us anywhere, but it costs him nothing.",
+          r:"“Not bad,” he says, and waits for the real question.",
+          s:0, u:3, d:0,
+          w:"Pleasant but low yield. It neither harms nor helps much, and he may read it as delay." },
+        { l:"Your file mentions a strained marriage, friends pulling away, and your weight. Where should we begin?",
+          t:"I'm being efficient with the time we have, and the list gives us plenty to work with.",
+          r:"He laughs, too short. “Wow. Straight to the list, then. I didn't realize I was that easy to summarize.”",
+          s:26, u:-6, d:0,
+          w:"Reading out three sore spots at once, the marriage, the friendships and his weight, tells him he has been discussed and reduced to a list before he has said a word. Shame arrives in the first minute." }
+      ]},
+    { title:"The marriage",
+      ctx:"Before he says a word about it, you already know a little: his wife keeps a second apartment in another city, mostly funded by him, and comes home some weekends. Around others, he calls the marriage happy.",
+      said:"“My marriage? Honestly, it's happy. She's just... independent. Keeps her own place in the city for work. It works for us.”",
+      options:[
+        { l:"It sounds like you've found a rhythm that works.",
+          t:"I'm mirroring his phrasing because he tells everyone this marriage is happy, and that story may be protecting something fragile. It also lets me avoid what I already see.",
+          r:"He relaxes visibly, nodding. “Exactly. People don't get that not every marriage looks the same.”",
+          s:-4, u:6, d:0,
+          w:"Comforting and safe, but it accepts the “happy” story as given, so nothing underneath gets touched." },
+        { l:"What does a typical week together actually look like?",
+          t:"“Happy” and “independent” tell me nothing about how much contact exists. His answer may show the distance between the story and the routine, or a rehearsed version, and what he leaves out will matter.",
+          r:"He pauses, recalculating. “We... talk on the phone most nights. She visits when she can.”",
+          s:3, u:8, d:1,
+          w:"A concrete question lets the gap between story and routine appear in his own words, without an accusation." },
+        { l:"How did the second apartment come about?",
+          t:"He funds it, and it seems to have arrived without much discussion. How the decision was made may show who decides things in this marriage, and how hard it is for him to say no.",
+          r:"“She found it. I just handle the payments. It's easier that way,” he says, with a shrug that isn't quite easy.",
+          s:6, u:6, d:2,
+          w:"This asks about a decision rather than a feeling, so it is low threat, and it surfaces how he avoids conflict." },
+        { l:"You're paying for two apartments and she's home some weekends. That sounds lonely.",
+          t:"I'm naming the loneliness because his friends suspect he stays because he believes he won't find anyone else. But I'm saying it in the first ten minutes, so I may be ahead of him.",
+          r:"His smile tightens. “Lonely? No. You don't know her.”",
+          s:16, u:-2, d:2,
+          w:"The loneliness is probably close to the truth, which is why it stings. This early, he hears pity or attack, and defends the marriage harder." },
+        { l:"Honestly, that doesn't sound like a happy marriage.",
+          t:"The facts point one way, and I'd rather be straightforward than let the story stand.",
+          r:"His face closes. “Wow. Okay. You've known me ten minutes.”",
+          s:40, u:-10, d:0,
+          w:"A verdict delivered before any trust exists. It tells him his choices are being judged, and for someone afraid of being unwanted, that lands as shame." }
+      ]},
+    { title:"The friendships",
+      ctx:"People close to Nikolaj describe a pattern in his friendships: when someone sets a limit with him, he doesn't accept it quietly. He tends to bring it up again later, framing himself as the one left confused and hurt.",
+      said:"“My friends are great, mostly. Although lately some of them have gotten weird about boundaries. Like my friend's girlfriend, she wouldn't hang out with me one-on-one, and I still don't get why. We're supposed to be close.”",
+      options:[
+        { l:"It sounds like that really stayed with you.",
+          t:"I'm reflecting the feeling and leaving her decision alone. He describes a “no” as a personal wound, and that may echo a bigger fear of being unwanted.",
+          r:"“It did. I couldn't stop thinking about it for days. Nobody understood how much that hurt.”",
+          s:-4, u:8, d:1,
+          w:"Validates the felt hurt without endorsing his reading of it. It builds safety, though on its own it can leave the pattern unnamed." },
+        { l:"What did you do after she said no?",
+          t:"His friends describe him raising the same refusal again and again. What he does after a “no” may say more than what he feels about it, and I want to hear how he explains his own part.",
+          r:"“I brought it up again, later. A few times, actually. I just wanted her to explain it properly.”",
+          s:7, u:5, d:2,
+          w:"Asks about behavior instead of blame, so he can describe the pattern himself. Slightly exposing, so it costs a little shame." },
+        { l:"What did it mean to you when she said no?",
+          t:"I'm asking about the meaning, not the facts. If a refusal registers as rejection, that would explain why he can't let it go.",
+          r:"“That she doesn't like me. That I'm... too much, maybe.” He laughs it off, but only just.",
+          s:2, u:11, d:2,
+          w:"Going to meaning rather than behavior surfaces the fear underneath (being too much, being unwanted) without accusing him of anything. It builds alliance and depth at once." },
+        { l:"Do you think some of your friends have pulled back because of how “no” gets handled?",
+          t:"This is a hard question, and only worth asking if he feels I'm on his side. If it lands, he might see the pattern himself. If not, he hears blame.",
+          r:"“So it's my fault.” His voice goes flat. “That's what this is?”",
+          rr:"He is quiet for a moment. “...Maybe. Some of them. I don't know how to stop.”",
+          s:26, u:-8, d:2, ripe:40,
+          w:"The same question protects or shames depending on timing. Once he trusts you, it invites insight. Too early, it confirms his fear that everyone is fed up with him." },
+        { l:"You keep bringing it up after people say no. Do you see that as manipulative?",
+          t:"Others describe it that way, and someone should say it plainly.",
+          r:"“Manipulative?” His voice cracks upward. “Is that what they told you?”",
+          s:46, u:-12, d:0,
+          w:"“Manipulative” is a character verdict, and it is exactly the word that would confirm his worst fear about himself. Shame floods, and nothing else can be heard." }
+      ]},
+    { title:"The autism question",
+      ctx:"When his friends raised the pattern of guilt-tripping directly, he didn't sit with it. Within days, he was telling people he suspected he might be autistic, that it would explain why he doesn't read boundaries the way others do. No one close to him believes it fits.",
+      said:"“Since we're talking about boundaries... I've been thinking I might be autistic. That would explain a lot, honestly. Why I don't always read situations the way other people do.”",
+      options:[
+        { l:"That sounds like it would be a relief, having an explanation.",
+          t:"I'm staying with the relief because a label offers an explanation that isn't his fault, and that need may matter more right now than whether the label fits.",
+          r:"“It really would be. People would finally understand it's not my fault.”",
+          s:-6, u:6, d:0,
+          w:"Soothing, but it quietly endorses the label before anyone has looked at it, and it leaves “not my fault” untouched." },
+        { l:"What would having a diagnosis change for you?",
+          t:"I'm curious what the label is for, before deciding whether it's true. What he hopes it will change might show what he most fears about the current situation.",
+          r:"“People would stop being angry at me. They'd understand it's not on purpose.”",
+          s:3, u:10, d:2,
+          w:"Asks about function rather than validity. The answer reveals his fear of other people's anger and his wish to be seen as blameless, which is more useful than debating the label." },
+        { l:"Would it help to look at that properly, with an assessment, and also at what happens between you and your friends?",
+          t:"I'm treating the question as legitimate instead of dismissing it, while keeping the friendships in view. It avoids a fight about whether the label is real.",
+          r:"“Fine. Yeah. That works,” he says, visibly relieved to be given a plan.",
+          s:2, u:9, d:1,
+          w:"A both/and response: it takes the request seriously without resolving it, and keeps the interpersonal pattern on the table." },
+        { l:"I notice this idea came up right after your friends raised the guilt-tripping. What do you make of that timing?",
+          t:"The timing is striking and I can't ignore it, but I could be wrong. He may have wondered about this for years. Asked at the wrong moment, it sounds like I've already decided.",
+          r:"He shifts, jaw tightening. “Are you saying I'm making it up to get out of trouble?”",
+          rr:"He is silent, then exhales. “...Maybe partly. It felt like something I could hold onto.”",
+          s:24, u:-6, d:2, ripe:50,
+          w:"This can open real insight, but only once he feels you are not building a case. Earlier, it sounds like an accusation of faking." },
+        { l:"That's convenient timing, isn't it?",
+          t:"It is convenient, and I'd rather be honest about that than pretend to buy it.",
+          r:"He goes rigid. “Convenient. So you think I'm faking.”",
+          s:38, u:-10, d:0,
+          w:"Sarcasm passed off as insight. It labels him as dishonest rather than as someone protecting himself, which makes the shame unbearable and the defense harder." }
+      ]},
+    { title:"The father and the brother",
+      ctx:"His father built a company from nothing and is openly critical of him. His brother works under their father and has his full confidence. Nikolaj went a different route, and by most accounts, the relationship with his father has only grown more strained.",
+      said:"“My father built his whole company from nothing. My brother works for him now, has his trust completely. Me, I went a different way. He's never exactly said he's proud of me.”",
+      options:[
+        { l:"That sounds like a hard thing to carry.",
+          t:"I'm holding the wound without interpreting it. He says his father has never been proud of him, and much of his story may be arranged around that.",
+          r:"“It is. I don't really let people see how much it gets to me.”",
+          s:-6, u:9, d:1,
+          w:"Simple acknowledgment of a real wound. He starts to show what he normally hides." },
+        { l:"What do you imagine he'd need to see from you to say it?",
+          t:"I want his standard for “enough,” not mine. If he can't name one, it may keep moving, or he may never have tested it.",
+          r:"He goes quiet for a moment. “I genuinely don't know. Maybe nothing would be enough.”",
+          s:6, u:5, d:2,
+          w:"Invites him to define the standard himself. A little exposing because it touches failure, but it gets to the belief that nothing he does is enough." },
+        { l:"What's it like being the brother who went a different way?",
+          t:"The brother is the comparison he can't escape, and I'd like to hear how it feels from inside, not just how it looks on paper.",
+          r:"“Free, sometimes.” He glances away. “Mostly like the one who didn't make it.”",
+          s:10, u:8, d:2,
+          w:"Opens the sibling comparison through feeling instead of fact. It costs some shame because it touches failure, but he answers honestly." },
+        { l:"It seems your father's opinion matters a great deal to you, even though it hurts.",
+          t:"He speaks about his father's wealth with pride while describing a critical relationship. Naming both may help, but it can also feel like being cornered.",
+          r:"“I don't care what he thinks,” he says, too fast.",
+          rr:"He pauses. “...It matters more than I'd like.”",
+          s:20, u:-4, d:2, ripe:58,
+          w:"Says aloud that admiration and hurt coexist. With enough trust, he feels understood. Without it, he denies it, since caring what his father thinks feels like weakness." },
+        { l:"Do you think his criticism might come from concern?",
+          t:"Maybe there's another way to see his father's behavior, one that softens the whole picture for him.",
+          r:"“Concern?” He looks at you. “That's what everyone says.”",
+          s:22, u:-6, d:0,
+          w:"Defends the father, so from his side you have taken the critic's position. Reframing before he has felt heard usually reads as dismissal." },
+        { l:"Some people would say your father has a point about the degree and the weight.",
+          t:"Facing facts is part of the work, and his father isn't entirely wrong.",
+          r:"The color drains from his face. “Wow. Great. You sound exactly like him.”",
+          s:56, u:-16, d:0,
+          w:"Joins the critic on the two points that carry his deepest shame, the unfinished degree and his weight. It repeats the wound instead of treating it." }
+      ]},
+    { title:"Food, weight, and stress",
+      ctx:"His father has pushed him onto Ozempic for the weight gain of the last few years. Nikolaj attributes the weight entirely to stress. People who spend time with him describe large portions and several liters of Coca-Cola most days.",
+      said:"“He's got me on Ozempic now. For the weight. But honestly, it's the stress, my doctor's basically confirmed my body can't lose weight under this much anxiety. I barely eat as it is.”",
+      options:[
+        { l:"It sounds exhausting, carrying that much stress in your body.",
+          t:"His stress may be real even if the explanation is incomplete. I'm holding off on the Coca-Cola for now, aware that I'm postponing something significant.",
+          r:"“It is. Nobody really gets how much I'm carrying.”",
+          s:-4, u:7, d:0,
+          w:"Validates the felt strain and keeps him engaged. The contradiction stays untouched, which is a choice with a cost." },
+        { l:"Walk me through what a normal day of eating looks like for you.",
+          t:"I want details instead of impressions. The gap between what he says and what others see could be denial, shame or plain unawareness, and each would call for a different response.",
+          r:"He lists a modest breakfast, skips lunch, “maybe something small” for dinner. The math doesn't quite add up, and he doesn't seem to notice.",
+          s:10, u:4, d:2,
+          w:"Concrete and non-accusing, but questions about food can feel like inspection, so it costs some shame." },
+        { l:"How do you feel when your father brings up your weight?",
+          t:"Food and weight are tangled up with feeling controlled and judged by his father. The feeling may tell me more than the diet.",
+          r:"“Small. Like a project he can't fix.” He picks at his sleeve.",
+          s:8, u:10, d:2,
+          w:"Moves from the body to the relationship around it. He gets to describe how it feels to be a problem to his father, which is close to the root of the shame." },
+        { l:"I'm curious how the Coca-Cola fits with “barely eating.” Help me understand.",
+          t:"The contradiction matters, but I want to ask it as a puzzle we solve together, not a catch. Only if he feels safe will he look at it.",
+          r:"“That's different. Liquid doesn't count,” he says, with total conviction.",
+          rr:"He frowns. “I never really counted it. Huh.”",
+          s:20, u:-4, d:2, ripe:66,
+          w:"Framed as shared curiosity, it can let him notice the gap on his own. Without trust, even the gentlest version feels like being caught." },
+        { l:"You say you barely eat, but you drink four liters of Coke a day. That doesn't add up.",
+          t:"The numbers contradict him, and I'd rather be honest than let it slide.",
+          r:"“Who told you that?” he snaps. “My father? My friends?”",
+          s:42, u:-12, d:0,
+          w:"A gotcha. It exposes the story he tells himself, and the shame of being caught makes him attack the source instead of hearing the point." },
+        { l:"Have you thought about cutting the Coke out? That might help with the weight.",
+          t:"There's a practical fix within reach, and that would let him leave with something.",
+          r:"“Wow, thanks, doctor.” The sarcasm is thin. “I hadn't thought of that.”",
+          s:24, u:-6, d:0,
+          w:"Advice before understanding treats the weight as a problem to solve, the same posture his father takes. It repeats the shame of being a project." }
+      ]}
+  ];
+
+  const OUTRO_COMMON = { kind:"narr", text:"He is on antidepressants already, and insists they don't work. Across every part of his life he's described this hour, the explanation always sits somewhere outside himself." };
+  const OUTRO_TAIL = {
+    opening:[ { kind:"narr", text:"He picks up his coat slowly, then stops." },
+              { kind:"nik", text:"“Can I ask something? Does this usually take a long time?” It is the first question all hour that isn't a defense." } ],
+    bruised:[ { kind:"narr", text:"He stayed the whole hour, but every hard question cost him." },
+              { kind:"nik", text:"“I'll think about it,” he says, and you can't tell what “it” is." } ],
+    comfortable:[ { kind:"narr", text:"The hour was pleasant. Almost nothing in it was hard." },
+              { kind:"nik", text:"“That was good, actually. I feel like you really get it,” he says, reaching for his coat." } ],
+    polite:[ { kind:"narr", text:"He is polite, and already somewhere else." },
+              { kind:"nik", text:"“Thanks for your time,” he says, checking his phone. “I'll see.”" } ]
+  };
+  const ENDINGS = {
+    walkout:{ title:"The Walkout", desc:"Nikolaj left before the hour was up. With a client whose fault line is shame, each verdict or exposure stacked on the last until he could not stay in the room. He did not leave because he is “difficult.” He left because feeling seen as flawed became unbearable faster than trust could form." },
+    opening:{ title:"The Second Appointment", desc:"He stayed, he answered, and he asked a question that wasn't a defense. You built enough trust to reach material he normally deflects, and pressed on it only when it could be borne." },
+    bruised:{ title:"The Bruised Hour", desc:"You reached real material, but the alliance was still thin when you did. He stayed, guarded, and whether he returns is an open question." },
+    comfortable:{ title:"The Comfortable Hour", desc:"He left relaxed and complimentary, with his story fully intact. Warmth kept him safe, but little in the hour asked him to look at anything. Worth asking your group: was that kindness, or avoidance dressed as kindness?" },
+    polite:{ title:"The Polite Exit", desc:"He stayed the hour and thanked you, but he never really arrived. Not enough trust formed for anything real to be said, and he is unlikely to rebook." }
+  };
+  const LABELS = ["Start","Opening","Marriage","Friends","Autism","Father","Food"];
+  const MOUTH = { calm:"M40 56q10 6 20 0", guarded:"M41 58h18", tense:"M40 61q10 -7 20 0" };
+
+  const titleEl = document.getElementById('title');
+  const startBtn = document.getElementById('start-btn');
+  const wrap = document.getElementById('dialogue-wrap');
+  const box = document.getElementById('box');
+  const portraitEl = document.getElementById('portrait');
+  const speakerEl = document.getElementById('speaker');
+  const lineEl = document.getElementById('line');
+  const choicesEl = document.getElementById('choices');
+  const hintEl = document.getElementById('hint');
+  const resultsEl = document.getElementById('results');
+  const hud = document.getElementById('hud');
+  const shameFill = document.getElementById('shame-fill');
+  const trustFill = document.getElementById('trust-fill');
+  const shameState = document.getElementById('shame-state');
+  const trustState = document.getElementById('trust-state');
+  const mouth = document.getElementById('mouth');
+
+  let queue = [], mi = 0, current = null, ended = null;
+  let shame = 20, trust = 20, depth = 0, history = [], picks = [];
+
+  function clamp(v){ return Math.max(0, Math.min(100, v)); }
+  function shameLabel(v){ return v < 25 ? "Settled" : v < 50 ? "Guarded" : v < 75 ? "Bristling" : "Flooded"; }
+  function trustLabel(v){ return v < 25 ? "Wary" : v < 45 ? "Testing" : v < 65 ? "Opening" : "Engaged"; }
+
+  function setHud(s,t){
+    shameFill.style.width = s + "%";
+    shameFill.style.background = s < 40 ? "#7c9a82" : (s < 70 ? "#d9a441" : "#c9563f");
+    trustFill.style.width = t + "%";
+    shameState.textContent = shameLabel(s);
+    trustState.textContent = trustLabel(t);
+    mouth.setAttribute("d", s < 40 ? MOUTH.calm : (s < 70 ? MOUTH.guarded : MOUTH.tense));
+    portraitEl.classList.toggle("warn", s >= 40 && s < 70);
+    portraitEl.classList.toggle("hot", s >= 70);
+  }
+
+  function resetGame(){
+    shame = 20; trust = 20; depth = 0; history = [{ s:20, t:20 }]; picks = [];
+    ended = null; queue = []; mi = 0; current = null;
+    setHud(20, 20);
+  }
+
+  function startMoment(i){
+    if(i > 0) shame = Math.max(0, shame - 6);
+    const m = moments[i];
+    queue = [
+      { kind:"narr", text:m.ctx, meters:{ s:shame, t:trust } },
+      { kind:"nik", text:m.said, options:m.options, idx:i }
+    ];
+    nextNode();
+  }
+
+  function endingKey(){
+    if(trust >= 60 && depth >= 8) return "opening";
+    if(depth >= 8) return "bruised";
+    if(trust >= 45) return "comfortable";
+    return "polite";
+  }
+
+  function nextNode(){
+    if(queue.length){ show(queue.shift()); return; }
+    if(ended){ showResults(); return; }
+    mi++;
+    if(mi < moments.length){ startMoment(mi); return; }
+    ended = endingKey();
+    queue = [OUTRO_COMMON].concat(OUTRO_TAIL[ended]);
+    nextNode();
+  }
+
+  function choose(idx, k){
+    const o = moments[idx].options[k];
+    const prevS = shame;
+    let dS = o.s, dT = o.u, timing = null, reply = o.r;
+    if(o.ripe !== undefined){
+      if(trust >= o.ripe){ timing = "ripe"; dS = Math.round(o.s * 0.25); dT = 10; reply = o.rr; }
+      else { timing = "early"; }
+    }
+    if(dS > 0 && shame >= 60) dS = Math.round(dS * 1.3);
+    shame = clamp(shame + dS);
+    trust = clamp(trust + dT);
+    const dd = dS >= 20 ? 0 : (o.d || 0);
+    depth += dd;
+    history.push({ s:shame, t:trust });
+    picks[idx] = { k:k, dS:dS, dT:dT, timing:timing, dd:dd, reply:reply };
+    queue = [
+      { kind:"think", text:o.t },
+      { kind:"nik", text:reply, meters:{ s:shame, t:trust } }
+    ];
+    if(shame >= 100){
+      ended = "walkout";
+      queue.push({ kind:"narr", text:"Nikolaj is already standing. “I didn't come here to be picked apart,” he says, and the door closes before you can answer." });
+    } else if(prevS < 70 && shame >= 70){
+      queue.push({ kind:"narr", text:"His jaw is tight and his answers are getting shorter. One more push and he may bolt." });
+    }
+    nextNode();
+  }
+
+  function show(node){
+    current = node;
+    if(node.meters) setHud(node.meters.s, node.meters.t);
+    box.className = node.kind === "narr" ? "narration" : (node.kind === "think" ? "thought" : "");
+    portraitEl.classList.toggle('hidden-p', node.kind !== "nik");
+    speakerEl.textContent = node.kind === "narr" ? "Narrator" : (node.kind === "think" ? "You, thinking" : "Nikolaj");
+    lineEl.textContent = node.text;
+    choicesEl.innerHTML = "";
+    if(node.options){
+      choicesEl.classList.remove('hidden');
+      hintEl.classList.add('hidden');
+      box.style.cursor = "default";
+      node.options.forEach((o,k)=>{
+        const b = document.createElement('button');
+        b.className = 'choice-btn'; b.type = 'button';
+        b.innerHTML = '<span class="choice-label">'+o.l+'</span>';
+        b.addEventListener('click', (e)=>{ e.stopPropagation(); choose(node.idx, k); });
+        choicesEl.appendChild(b);
+      });
+      box.scrollTop = 0;
+    } else {
+      choicesEl.classList.add('hidden');
+      hintEl.classList.remove('hidden');
+      box.style.cursor = "pointer";
+    }
+  }
+
+  function advance(){
+    if(!current || current.options) return;
+    nextNode();
+  }
+  box.addEventListener('click', advance);
+  box.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); advance(); } });
+
+  function fmt(dS, dT){
+    return "Shame " + (dS > 0 ? "+" : "") + dS + " \u00b7 Trust " + (dT > 0 ? "+" : "") + dT;
+  }
+  function altEffect(o){
+    if(o.ripe === undefined) return fmt(o.s, o.u);
+    return "Too early: " + fmt(o.s, o.u) + ". Once trust is " + o.ripe + " or higher: " + fmt(Math.round(o.s * 0.25), 10);
+  }
+
+  function chartSVG(){
+    const n = history.length, x0 = 18, x1 = 302, top = 12, bottom = 104;
+    const xs = i => n > 1 ? x0 + (x1 - x0) * i / (n - 1) : x0;
+    const ys = v => bottom - (bottom - top) * v / 100;
+    const line = (key, color) => {
+      const pts = history.map((h,i)=> xs(i).toFixed(1) + "," + ys(h[key]).toFixed(1)).join(" ");
+      const dots = history.map((h,i)=> '<circle cx="'+xs(i).toFixed(1)+'" cy="'+ys(h[key]).toFixed(1)+'" r="2.8" fill="'+color+'"/>').join("");
+      return '<polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2"/>' + dots;
+    };
+    const labels = history.map((h,i)=> '<text x="'+xs(i).toFixed(1)+'" y="120" font-size="8" text-anchor="middle" fill="#a9b3a4">'+LABELS[i]+'</text>').join("");
+    return '<svg viewBox="0 0 320 128" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Shame and trust across the session">'+
+      '<line x1="'+x0+'" y1="'+top+'" x2="'+x1+'" y2="'+top+'" stroke="#c9563f" stroke-dasharray="3 3" stroke-width="1"/>'+
+      '<text x="'+x1+'" y="8" font-size="7" text-anchor="end" fill="#c9563f">walkout line</text>'+
+      line("s","#d9a441") + line("t","#8fb3c9") + labels + '</svg>';
+  }
+
+  const notes = document.getElementById('notes');
+  const saveHint = document.getElementById('save-hint');
+  try{
+    notes.addEventListener('input', ()=>{
+      try{ localStorage.setItem('nikolaj-notes', notes.value); saveHint.textContent = 'Saved in this browser.'; }
+      catch(e){ saveHint.textContent = ''; }
+    });
+  } catch(e){}
+
+  function showResults(){
+    wrap.classList.add('hidden');
+    hud.classList.add('hidden');
+    resultsEl.classList.remove('hidden');
+    resultsEl.scrollTop = 0;
+
+    const end = ENDINGS[ended];
+    document.getElementById('end-title').textContent = end.title;
+    document.getElementById('end-desc').textContent = end.desc;
+    document.getElementById('chart').innerHTML = chartSVG();
+    const peak = Math.max.apply(null, history.map(h => h.s));
+    document.getElementById('end-stats').textContent =
+      "Peak shame: " + peak + " of 100 \u00b7 Final trust: " + trust + " of 100 \u00b7 Real material reached: " + depth + " of 11";
+
+    const rev = document.getElementById('review');
+    rev.innerHTML = "";
+    picks.forEach((p,i)=>{
+      const m = moments[i], o = m.options[p.k];
+      const others = m.options.map((x,k)=>({x:x,k:k})).filter(e => e.k !== p.k);
+      let timingChip = "";
+      if(p.timing === "ripe") timingChip = '<span class="chip ok">Well timed</span>';
+      if(p.timing === "early") timingChip = '<span class="chip bad">Too early</span>';
+      const div = document.createElement('div');
+      div.className = 'rev';
+      div.innerHTML =
+        '<div class="rev-title">'+(i+1)+'. '+m.title+'</div>'+
+        '<div class="rev-said">You said: '+o.l+'</div>'+
+        '<div class="rev-react">'+p.reply+'</div>'+
+        '<span class="chip">'+fmt(p.dS, p.dT)+'</span>'+timingChip+
+        '<p class="rev-why">'+o.w+'</p>'+
+        ((ended === "walkout" && i === picks.length - 1) ? '<p class="rev-why" style="color:#e08a76;">This is where he left.</p>' : '')+
+        '<details><summary>Other paths and how they would have landed</summary>'+
+        others.map(e=>'<div class="alt"><strong>'+e.x.l+'</strong><br><span class="chip">'+altEffect(e.x)+'</span><br>'+e.x.w+'</div>').join("")+
+        '</details>';
+      rev.appendChild(div);
+    });
+
+    try{
+      const saved = localStorage.getItem('nikolaj-notes');
+      if(saved && !notes.value) notes.value = saved;
+    } catch(e){}
+  }
+
+  startBtn.addEventListener('click', ()=>{
+    resetGame();
+    titleEl.classList.add('hidden');
+    hud.classList.remove('hidden');
+    wrap.classList.remove('hidden');
+    startMoment(0);
+    box.focus();
+  });
+
+  document.getElementById('restart-btn').addEventListener('click', ()=>{
+    resetGame();
+    resultsEl.classList.add('hidden');
+    titleEl.classList.remove('hidden');
+  });
+
+  resetGame();
+})();
+</script>
+</body>
+</html>
